@@ -1,4 +1,5 @@
 #include <wav.h>
+#include <stdlib.h>
 
 static const uint64_t RIFF_MAGIC    = 0x46464952;
 static const uint64_t WAVE_MAGIC    = 0x45564157;
@@ -59,9 +60,31 @@ void wav_close(wav_file_t* wav_file)
     {
         fclose(wav_file->file);
     }
+
+    if(wav_file->content.data != NULL)
+    {
+        free(wav_file->content.data);
+    }
 }
 
-void wav_read_content(wav_file_t* wav_file)
+wav_status_t wav_read_content(wav_file_t* wav_file)
 {
+    if(!wav_file->file)
+    {
+        return WAV_ERROR_FILE_CLOSED;
+    }
 
+    uint32_t length = wav_file->header.data_size;
+    wav_file->content.length = length;
+    wav_file->content.data = (uint8_t*)malloc(length);
+
+    if(fread(wav_file->content.data, 1, length, wav_file->file) != length)
+    {
+        free(wav_file->content.data);
+        wav_file->content.data = NULL;
+        wav_file->content.length = 0;
+        return WAV_ERROR_DATA_LENGTH_CORRUPTED;
+    }
+
+    return WAV_OK;
 }

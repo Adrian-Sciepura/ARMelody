@@ -12,7 +12,9 @@ typedef enum
     WAV_ERROR_HEADER_RIFF_CHUNK_CORRUPTED,
     WAV_ERROR_HEADER_WAVE_CHUNK_CORRUPTED,
     WAV_ERROR_HEADER_FMT_CHUNK_CORRUPTED,
-    WAV_ERROR_HEADER_DATA_CHUNK_CORRUPTED
+    WAV_ERROR_HEADER_DATA_CHUNK_CORRUPTED,
+    WAV_ERROR_FILE_CLOSED,
+    WAV_ERROR_DATA_LENGTH_CORRUPTED
 } wav_status_t;
 
 typedef struct 
@@ -50,6 +52,6 @@ typedef struct
 
 wav_status_t wav_open(const char* filename, wav_file_t* wav_file);
 void wav_close(wav_file_t* wav_file);
-void wav_read_content(wav_file_t* wav_file);
+wav_status_t wav_read_content(wav_file_t* wav_file);
 
 #endif
