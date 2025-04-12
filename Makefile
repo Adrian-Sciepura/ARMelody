@@ -1,6 +1,6 @@
 FLAGS = -MMD -Iinclude
 CFLAGS = -g -O0 -Wall -static
-LDFLAGS =
+LDFLAGS = -lm
 
 GNU = aarch64-linux-gnu
 
@@ -18,8 +18,8 @@ $(BUILD_DIR)/%_s.o : $(SRC_DIR)/%.s
 	mkdir -p $(@D)
 	$(CC) $(FLAGS) $(CFLAGS) -c -o $@ $<
 
-C_SRCS = $(wildcard $(SRC_DIR)/*.c)
-ASM_SRCS = $(wildcard $(SRC_DIR)/*.s)
+C_SRCS = $(shell find $(SRC_DIR) -type f -name "*.c")
+ASM_SRCS = $(shell find $(SRC_DIR) -type f -name "*.s")
 
 C_OBJS = $(C_SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%_c.o)
 ASM_OBJS = $(ASM_SRCS:$(SRC_DIR)/%.s=$(BUILD_DIR)/%_s.o)
@@ -30,7 +30,7 @@ DEPS = $(OBJS:%.o=%.d)
 -include $(DEPS)
 
 $(BUILD_DIR)/app.elf : $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
 
 .PHONY: clean all
 

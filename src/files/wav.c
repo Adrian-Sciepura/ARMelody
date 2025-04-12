@@ -1,4 +1,4 @@
-#include <wav.h>
+#include <files/wav.h>
 #include <stdlib.h>
 
 static const uint64_t RIFF_MAGIC    = 0x46464952;

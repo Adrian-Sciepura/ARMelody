@@ -1,5 +1,5 @@
-#ifndef WAV_H_
-#define WAV_H_
+#ifndef FILES_WAV_H_
+#define FILES_WAV_H_
 
 #include <stdio.h>
 #include <stdint.h>

@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <wav.h>
 #include <stdint.h>
+#include <files/wav.h>
 
 void print_wav_info(wav_file_t* wav_file)
 {
