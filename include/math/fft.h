@@ -7,6 +7,6 @@ typedef void(*fft_callback)(complex_t* data, int n);
 
 void cooley_tukey_fft(complex_t* data, int n);
 
-void cooley_turkey_ifft(complex_t* data, int n);
+void cooley_tukey_ifft(complex_t* data, int n);
 
 #endif

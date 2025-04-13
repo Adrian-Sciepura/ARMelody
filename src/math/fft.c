@@ -33,7 +33,7 @@ void cooley_tukey_fft(complex_t* data, int n)
     free(split);
 }
 
-void cooley_turkey_ifft(complex_t* data, int n)
+void cooley_tukey_ifft(complex_t* data, int n)
 {
     for(int i = 0; i < n; i++)
     {
