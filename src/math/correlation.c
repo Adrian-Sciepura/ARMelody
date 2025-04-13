@@ -6,25 +6,30 @@
 
 void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n)
 {
-    complex_t* orginal_data_copy = (complex_t*)malloc(n * sizeof(complex_t));
-    for(int i = 0; i < n; i++)
-        orginal_data_copy[i] = orginal_data[i];
+    int padded_size = 2 * n;
+    complex_t* padded_orginal = (complex_t*)calloc(padded_size, sizeof(complex_t));
+    complex_t* padded_potential = (complex_t*)calloc(padded_size, sizeof(complex_t));
 
+    for(int i = 0; i < n; i++)
+    {
+        padded_orginal[i] = orginal_data[i];
+        padded_potential[i] = potential_match_data[i];
+    }
     // result = IFFT(FFT(orginal_data_copy) x conjugate(FFT(potential_match_data)))
-    cooley_tukey_fft(orginal_data_copy, n);
-
-    cooley_tukey_fft(potential_match_data, n);
-
+    cooley_tukey_fft(padded_orginal, padded_size);
+    cooley_tukey_fft(padded_potential, padded_size);
+    
     for(int i = 0; i < n; i++)
-        potential_match_data[i].im = -potential_match_data[i].im;
-        
+    {
+        padded_potential[i].im = -padded_potential[i].im;
+        complex_mul_inplace(padded_potential[i], padded_orginal[i]);
+    }
 
-    for(int i = 0; i < n; i++)
-        complex_mul_inplace(potential_match_data[i], orginal_data_copy[i]);
+    cooley_tukey_ifft(padded_potential, padded_size);
+    correlation_interpretation(padded_potential, padded_size);
 
-    cooley_tukey_ifft(potential_match_data, n);
-
-    free(orginal_data_copy);
+    free(padded_orginal);
+    free(padded_potential);
 }
 
 void correlation_interpretation(complex_t* data, int n)

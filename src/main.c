@@ -87,7 +87,6 @@ int main(int argc, char** argv)
     //cooley_tukey_fft(data_as_complex, number_of_samples);
     //cooley_tukey_ifft(data_as_complex, number_of_samples);
     correlation(data_as_complex, data_as_complex, number_of_samples);
-    correlation_interpretation(data_as_complex, number_of_samples);
     free(data_as_complex);
     wav_close(&wav_file);
     return 0;
