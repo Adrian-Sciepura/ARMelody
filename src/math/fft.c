@@ -25,7 +25,7 @@ void cooley_tukey_fft(complex_t* data, int n)
     for(int k = 0; k < n/2; k++)
     {
         complex_t tmp = complex_exp((complex_t){ .re = 0, .im = -2 * PI  * k / n });
-        complex_mul_inplace(tmp, odd[k]);
+        complex_mul_inplace(&tmp, odd[k]);
         data[k] = complex_add(even[k], tmp);
         data[n/2 + k] = complex_sub(even[k], tmp);
     }

@@ -43,8 +43,8 @@ static inline complex_t complex_mul(complex_t c1, complex_t c2)
 {
     return (complex_t) 
     {
-        .re = c1.re * c2.re,
-        .im = c1.im * c2.im
+        .re = c1.re * c2.re - c1.im * c2.im,
+        .im = c1.re * c2.im + c1.im * c2.re
     };
 }
 
@@ -88,10 +88,12 @@ static inline void complex_sub_inplace(complex_t c1, complex_t c2)
     c1.im -= c2.im;
 }
 
-static inline void complex_mul_inplace(complex_t c1, complex_t c2)
+static inline void complex_mul_inplace(complex_t* c1, complex_t c2)
 {
-    c1.re *= c2.re;
-    c1.im *= c2.im;
+    double temp_re = c1->re * c2.re - c1->im * c2.im;
+    double temp_im = c1->re * c2.im + c1->im * c2.re;
+    c1->re = temp_re;
+    c1->im = temp_im;
 }
 
 static inline void complex_mul_scalar_inplace(complex_t c1, double s)

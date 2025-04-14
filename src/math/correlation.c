@@ -19,10 +19,10 @@ void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n
     cooley_tukey_fft(padded_orginal, padded_size);
     cooley_tukey_fft(padded_potential, padded_size);
     
-    for(int i = 0; i < n; i++)
+    for(int i = 0; i < padded_size; i++)
     {
         padded_potential[i].im = -padded_potential[i].im;
-        complex_mul_inplace(padded_potential[i], padded_orginal[i]);
+        complex_mul_inplace(&padded_potential[i], padded_orginal[i]);
     }
 
     cooley_tukey_ifft(padded_potential, padded_size);
