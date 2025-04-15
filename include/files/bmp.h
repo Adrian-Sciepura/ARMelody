@@ -65,6 +65,7 @@ typedef struct
 
 void bmp_create(bmp_image_t* bmp_image, uint32_t width, uint32_t height, uint32_t bits_per_pixel);
 void bmp_free(bmp_image_t* bmp_image);
+graphics_buffer_t bmp_detach_buffer(bmp_image_t* bmp_image);
 bmp_status_t bmp_load(const char* filename, bmp_image_t* bmp_image);
 bmp_status_t bmp_save(const char* filename, bmp_image_t* bmp_image);
 

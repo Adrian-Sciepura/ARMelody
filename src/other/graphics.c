@@ -100,3 +100,65 @@ void graphics_draw_buffer(graphics_buffer_t* graphics_buffer, uint32_t x, uint32
         }
     }
 }
+
+void graphics_create_font(graphics_font_t* graphics_font, graphics_buffer_t* font_source, uint32_t char_width, uint32_t char_height, uint32_t vertical_spacing, uint32_t horizontal_spacing, graphics_color24_t font_color, graphics_color24_t background_color)
+{
+    *graphics_font = (graphics_font_t)
+    {
+        .font_buffer = *font_source,
+        .char_width = char_width,
+        .char_height = char_height,
+        .vertical_spacing = vertical_spacing,
+        .horizontal_spacing = horizontal_spacing,
+        .font_color = font_color,
+        .background_color = background_color
+    };
+}
+
+void graphics_draw_char(graphics_buffer_t* graphics_buffer, graphics_font_t* graphics_font, uint32_t x, uint32_t y, char c, graphics_color24_t color)
+{
+    uint8_t row = c / 16;
+    uint8_t col = c % 16;
+    for(int xp = 0; xp < graphics_font->char_width; xp++)
+    {
+        for(int yp = 0; yp < graphics_font->char_height; yp++)
+        {
+            graphics_color24_t pixel = graphics_get_pixel(
+                &graphics_font->font_buffer, 
+                xp + col * graphics_font->char_width + graphics_font->horizontal_spacing, 
+                yp + row * graphics_font->char_height + graphics_font->vertical_spacing);
+            
+            if(graphics_color_equal(pixel, graphics_font->background_color))
+            {
+                continue;
+            }
+            
+            if(graphics_color_equal(pixel, graphics_font->font_color))
+            {
+                graphics_draw_pixel(graphics_buffer, x + xp, y + yp, color);
+            }
+        }
+    }
+}
+
+void graphics_draw_string(graphics_buffer_t* graphics_buffer, graphics_font_t* graphics_font, uint32_t x, uint32_t y, char* string, graphics_color24_t color)
+{
+    int i = 0;
+    int offset_x = 0;
+    int offset_y = 0;
+
+    while(string[i] != '\0')
+    {
+        if(string[i] == '\n')
+        {
+            offset_y += graphics_font->char_height;
+            offset_x = 0;
+            i++;
+            continue;
+        }
+
+        graphics_draw_char(graphics_buffer, graphics_font, x + offset_x, y + offset_y, string[i], color);
+        offset_x += graphics_font->char_width;
+        i++;
+    }
+}

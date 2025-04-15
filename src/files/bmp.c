@@ -34,6 +34,13 @@ void bmp_free(bmp_image_t* bmp_image)
     memset(bmp_image, 0, sizeof(bmp_image_t));
 }
 
+graphics_buffer_t bmp_detach_buffer(bmp_image_t* bmp_image)
+{
+    graphics_buffer_t buffer = bmp_image->graphics_buffer;
+    memset(&bmp_image->graphics_buffer, 0, sizeof(graphics_buffer_t));
+    return buffer;
+}
+
 bmp_status_t bmp_load(const char* filename, bmp_image_t* bmp_image)
 {
     FILE* bmp_file = fopen(filename, "rb");
