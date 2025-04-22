@@ -19,16 +19,16 @@ void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n
         padded_potential[i] = potential_match_data[i];
     }
     // result = IFFT(FFT(padded_orginal) x conjugate(FFT(padded_potential)))
-    cooley_tukey_fft(padded_potential, padded_size);
+    fft_iterative(padded_potential, padded_size, false);
     
-    cooley_tukey_fft(padded_potential, padded_size);
+    fft_iterative(padded_potential, padded_size, false);
     
     for(int i = 0; i < padded_size; i++)
     {
         padded_potential[i].im = -padded_potential[i].im;
         complex_mul_inplace(&padded_potential[i], padded_orginal[i]);
     }
-    cooley_tukey_ifft(padded_potential, padded_size);
+    fft_iterative(padded_potential, padded_size, true);
 
     correlation_interpretation(padded_potential, padded_size);
 
