@@ -79,6 +79,51 @@ void fft_iterative(complex_t* data, int n, bool invert)
     }
 }
 
+void fft_iterative_neon(complex_neon_t* data, int n, bool invert)
+{
+    for(int i = 1, j = 0; i < n; i++)
+    {
+        int bit = n >> 1;
+        for(; j & bit; bit >>= 1)
+            j ^= bit;
+        
+        j ^= bit;
+        if(i < j)
+        {
+            complex_neon_t tmp = data[i];
+            data[i] = data[j];
+            data[j] = tmp;
+        }
+    }
+
+    for(int len = 2; len <= n; len <<= 1)
+    {
+        float angle = 2 * PI / len * (invert ? -1 : 1);
+        complex_neon_t wlen = { .re = vcosq_f32(vdupq_n_f32(angle)), .im = vsinq_f32(vdupq_n_f32(angle)) };
+        for(int i = 0; i < n; i += len)
+        {
+            complex_neon_t w = { .re = vdupq_n_f32(1), .im = vdupq_n_f32(0) };
+            for(int j = 0; j < len / 2; j++)
+            {
+                complex_neon_t u = data[i + j];
+                complex_neon_t v = complex_mul_neon(w, data[i + j + len / 2]);
+                data[i + j] = complex_add_neon(u, v);
+                data[i + j + len / 2] = complex_sub_neon(u, v);
+                w = complex_mul_neon(w, wlen);
+            }
+        }
+    }
+
+    if(invert)
+    {
+        for(int i = 0; i < n; i++)
+        {
+            data[i].re = complex_mul_scalar_neon(data[i], 1.0f / n).re;
+            data[i].im = complex_mul_scalar_neon(data[i], 1.0f / n).im;
+        }
+    }
+}
+
 void cooley_tukey_ifft(complex_t* data, int n)
 {
     for(int i = 0; i < n; i++)

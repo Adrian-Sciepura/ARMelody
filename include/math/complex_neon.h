@@ -4,43 +4,43 @@
 #include <math.h>
 #include <arm_neon.h>
 
-struct complex_neon_t
+typedef struct complex_neon_t
 {
     float32x4_t re;
     float32x4_t im;
-};
+}complex_neon_t;
 
-static inline struct complex_neon_t complex_add_neon(struct complex_neon_t c1, struct complex_neon_t c2)
+static inline complex_neon_t complex_add_neon(complex_neon_t c1, complex_neon_t c2)
 {
-    return (struct complex_neon_t) 
+    return (complex_neon_t) 
     {
         .re = vaddq_f32(c1.re, c2.re),
         .im = vaddq_f32(c1.im, c2.im)
     };
 }
 
-static inline struct complex_neon_t complex_sub_neon(struct complex_neon_t c1, struct complex_neon_t c2)
+static inline complex_neon_t complex_sub_neon(complex_neon_t c1, complex_neon_t c2)
 {
-    return (struct complex_neon_t) 
+    return (complex_neon_t) 
     {
         .re = vsubq_f32(c1.re, c2.re),
         .im = vsubq_f32(c1.im, c2.im)
     };
 }
 
-static inline struct complex_neon_t complex_mul_neon(struct complex_neon_t c1, struct complex_neon_t c2)
+static inline complex_neon_t complex_mul_neon(complex_neon_t c1, complex_neon_t c2)
 {
-    return (struct complex_neon_t) 
+    return (complex_neon_t) 
     {
         .re = vaddq_f32(vmulq_f32(c1.re, c2.re), vmulq_f32(c1.im, c2.im)),
         .im = vsubq_f32(vmulq_f32(c1.re, c2.im), vmulq_f32(c1.im, c2.re))
     };
 }
 
-static inline struct complex_neon_t complex_division_neon(struct complex_neon_t c1, struct complex_neon_t c2)
+static inline complex_neon_t complex_division_neon(complex_neon_t c1, complex_neon_t c2)
 {
     float32x4_t denominator = vaddq_f32(vmulq_f32(c2.re, c2.re), vmulq_f32(c2.im, c2.im));
-    return (struct complex_neon_t) 
+    return (complex_neon_t) 
     {
         .re = vdivq_f32(vaddq_f32(vmulq_f32(c1.re, c2.re), vmulq_f32(c1.im, c2.im)), denominator),
         .im = vdivq_f32(vsubq_f32(vmulq_f32(c1.im, c2.re), vmulq_f32(c1.re, c2.im)), denominator)
@@ -105,21 +105,21 @@ static inline float32x4_t vexpq_f32(float32x4_t x)
     return result;
 }
 
-static inline struct complex_neon_t complex_mul_scalar_neon(struct complex_neon_t c1, float s)
+static inline complex_neon_t complex_mul_scalar_neon(complex_neon_t c1, float s)
 {
     float32x4_t scalar = vdupq_n_f32(s);
-    return (struct complex_neon_t) 
+    return (complex_neon_t) 
     {
         .re = vmulq_f32(c1.re, scalar),
         .im = vmulq_f32(c1.im, scalar)
     };
 }
-static inline struct complex_neon_t complex_exp_neon(struct complex_neon_t c)
+static inline complex_neon_t complex_exp_neon(complex_neon_t c)
 {   
     float32x4_t ex = vexpq_f32(c.re);
     float32x4_t cos_val = vcosq_f32(c.im);
     float32x4_t sin_val = vsinq_f32(c.im);
-    return (struct complex_neon_t) 
+    return (complex_neon_t) 
     {
         .re = vmulq_f32(ex, cos_val),
         .im = vmulq_f32(ex, sin_val)
