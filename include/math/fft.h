@@ -3,6 +3,7 @@
 
 #include<stdbool.h>
 #include <math/complex.h>
+#include <math/complex_neon.h>
 
 typedef void(*fft_callback)(complex_t* data, int n);
 
