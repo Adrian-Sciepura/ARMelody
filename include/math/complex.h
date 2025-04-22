@@ -48,6 +48,16 @@ static inline complex_t complex_mul(complex_t c1, complex_t c2)
     };
 }
 
+static inline complex_t complex_division(complex_t c1, complex_t c2)
+{
+    double denominator = c2.re * c2.re + c2.im * c2.im;
+    return (complex_t) 
+    {
+        .re = (c1.re * c2.re + c1.im * c2.im) / denominator,
+        .im = (c1.im * c2.re - c1.re * c2.im) / denominator
+    };
+}
+
 static inline complex_t complex_mul_scalar(complex_t c1, double s)
 {
     return (complex_t) 
@@ -92,6 +102,15 @@ static inline void complex_mul_inplace(complex_t* c1, complex_t c2)
 {
     double temp_re = c1->re * c2.re - c1->im * c2.im;
     double temp_im = c1->re * c2.im + c1->im * c2.re;
+    c1->re = temp_re;
+    c1->im = temp_im;
+}
+
+static inline void complex_division_inplace(complex_t* c1, complex_t c2)
+{
+    double denominator = c2.re * c2.re + c2.im * c2.im;
+    double temp_re = (c1->re * c2.re + c1->im * c2.im) / denominator;
+    double temp_im = (c1->im * c2.re - c1->re * c2.im) / denominator;
     c1->re = temp_re;
     c1->im = temp_im;
 }
