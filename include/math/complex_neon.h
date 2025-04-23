@@ -32,8 +32,8 @@ static inline complex_neon_t complex_mul_neon(complex_neon_t c1, complex_neon_t 
 {
     return (complex_neon_t) 
     {
-        .re = vaddq_f32(vmulq_f32(c1.re, c2.re), vmulq_f32(c1.im, c2.im)),
-        .im = vsubq_f32(vmulq_f32(c1.re, c2.im), vmulq_f32(c1.im, c2.re))
+        .re = vsubq_f32(vmulq_f32(c1.re, c2.re), vmulq_f32(c1.im, c2.im)),
+        .im = vaddq_f32(vmulq_f32(c1.re, c2.im), vmulq_f32(c1.im, c2.re))
     };
 }
 

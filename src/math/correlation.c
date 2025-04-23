@@ -74,7 +74,7 @@ void correlation_neon(complex_neon_t* orginal_data, complex_neon_t* potential_ma
     for(int i = 0; i < padded_size; i++)
     {
         padded_potential[i].im = vnegq_f32(padded_potential[i].im);
-        complex_mul_scalar_neon(padded_potential[i], padded_orginal[i].re);
+        padded_potential[i] = complex_mul_scalar_neon(padded_potential[i], padded_orginal[i].re);
     }
     fft_iterative_neon(padded_potential, padded_size, true);
 
