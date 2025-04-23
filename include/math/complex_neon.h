@@ -105,15 +105,16 @@ static inline float32x4_t vexpq_f32(float32x4_t x)
     return result;
 }
 
-static inline complex_neon_t complex_mul_scalar_neon(complex_neon_t c1, float s)
+static inline complex_neon_t complex_mul_scalar_neon(complex_neon_t c1, float32x4_t s)
 {
-    float32x4_t scalar = vdupq_n_f32(s);
     return (complex_neon_t) 
     {
-        .re = vmulq_f32(c1.re, scalar),
-        .im = vmulq_f32(c1.im, scalar)
+        .re = vmulq_f32(c1.re, s),
+        .im = vmulq_f32(c1.im, s)
     };
 }
+
+
 static inline complex_neon_t complex_exp_neon(complex_neon_t c)
 {   
     float32x4_t ex = vexpq_f32(c.re);

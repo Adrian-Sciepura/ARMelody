@@ -118,8 +118,8 @@ void fft_iterative_neon(complex_neon_t* data, int n, bool invert)
     {
         for(int i = 0; i < n; i++)
         {
-            data[i].re = complex_mul_scalar_neon(data[i], 1.0f / n).re;
-            data[i].im = complex_mul_scalar_neon(data[i], 1.0f / n).im;
+            data[i].re = complex_mul_scalar_neon(data[i], vdupq_n_f32(1.0f / n)).re;
+            data[i].im = complex_mul_scalar_neon(data[i], vdupq_n_f32(1.0f / n)).im;
         }
     }
 }

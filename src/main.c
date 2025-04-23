@@ -84,7 +84,15 @@ int main(int argc, char** argv)
     for(int i = 0; i < number_of_samples; i++)
         data_as_complex[i].im = 0;
 
-    correlation(data_as_complex, data_as_complex, number_of_samples);
+    //correlation(data_as_complex, data_as_complex, number_of_samples);
+    
+    float32x4_t* data_as_complex_neon = (float32x4_t*)malloc(number_of_samples / 4 * sizeof(float32x4_t));
+    for(int i = 0; i < number_of_samples / 4; i++)
+    {
+        data_as_complex_neon[i] = vdupq_n_f32(data_as_complex[i].re);
+    }
+    correlation_neon((complex_neon_t*)data_as_complex_neon, (complex_neon_t*)data_as_complex_neon, number_of_samples / 4);
+    free(data_as_complex_neon);
 
     free(data_as_complex);
     wav_close(&wav_file);

@@ -51,3 +51,49 @@ void correlation_interpretation(complex_t* data, int n)
     }
     printf("Best match found at index %d with magnitude %f\n", best_index, max_magnitude);
 }
+
+void correlation_neon(complex_neon_t* orginal_data, complex_neon_t* potential_match_data, int n)
+{
+    int padded_size = 2;
+    while(n > padded_size)
+        padded_size *= 2;
+        
+    complex_neon_t* padded_orginal = (complex_neon_t*)calloc(padded_size, sizeof(complex_neon_t));
+    complex_neon_t* padded_potential = (complex_neon_t*)calloc(padded_size, sizeof(complex_neon_t));
+
+    for(int i = 0; i < n; i++)
+    {
+        padded_orginal[i] = orginal_data[i];
+        padded_potential[i] = potential_match_data[i];
+    }
+    // result = IFFT(FFT(padded_orginal) x conjugate(FFT(padded_potential)))
+    fft_iterative_neon(padded_potential, padded_size, false);
+    
+    fft_iterative_neon(padded_potential, padded_size, false);
+    
+    for(int i = 0; i < padded_size; i++)
+    {
+        padded_potential[i].im = vnegq_f32(padded_potential[i].im);
+        complex_mul_scalar_neon(padded_potential[i], padded_orginal[i].re);
+    }
+    fft_iterative_neon(padded_potential, padded_size, true);
+
+    correlation_interpretation_neon(padded_potential, padded_size);
+
+    free(padded_orginal);
+    free(padded_potential);
+}
+
+void correlation_interpretation_neon(complex_neon_t* data, int n)
+{
+    int best_index = 0;
+    float32x4_t max_magnitude = vdupq_n_f32(0);
+    for(int i = 0; i < n; i++)
+    {
+        float32x4_t magnitude = vaddq_f32(vmulq_f32(data[i].re, data[i].re), vmulq_f32(data[i].im, data[i].im));
+        max_magnitude = vmaxq_f32(max_magnitude, magnitude);
+    }
+    float max_val[4];
+    vst1q_f32(max_val, max_magnitude);
+    printf("Best match found at index %d with magnitude %f\n", best_index, max_val[0]);
+}
