@@ -19,7 +19,7 @@ void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n
         padded_potential[i] = potential_match_data[i];
     }
     // result = IFFT(FFT(padded_orginal) x conjugate(FFT(padded_potential)))
-    fft_iterative(padded_potential, padded_size, false);
+    fft_iterative(padded_orginal, padded_size, false);
     
     fft_iterative(padded_potential, padded_size, false);
     
@@ -67,7 +67,7 @@ void correlation_neon(complex_neon_t* orginal_data, complex_neon_t* potential_ma
         padded_potential[i] = potential_match_data[i];
     }
     // result = IFFT(FFT(padded_orginal) x conjugate(FFT(padded_potential)))
-    fft_iterative_neon(padded_potential, padded_size, false);
+    fft_iterative_neon(padded_orginal, padded_size, false);
     
     fft_iterative_neon(padded_potential, padded_size, false);
     
