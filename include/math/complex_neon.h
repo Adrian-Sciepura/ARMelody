@@ -49,9 +49,10 @@ static inline complex_neon_t complex_division_neon(complex_neon_t c1, complex_ne
 
 static inline float32x4_t wrap_to_pi(float32x4_t x)
 {
-    float32x4_t k = vmulq_f32(x, vdupq_n_f32(1 / (2 * M_PI)));
-    k = vcvtq_f32_s32(vcvtq_s32_f32(k)); // floor(x / 2π)
-    return vsubq_f32(x, vmulq_f32(k, vdupq_n_f32(2 * M_PI)));
+    const float32x4_t two_pi = vdupq_n_f32(2.0f * M_PI);
+    float32x4_t k = vdivq_f32(x, two_pi);
+    k = vrndnq_f32(k); // round to nearest
+    return vsubq_f32(x, vmulq_f32(k, two_pi));
 }
 
 
