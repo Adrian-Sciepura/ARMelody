@@ -61,6 +61,7 @@ static inline float32x4_t vsinq_f32(float32x4_t x)
 {
     x = wrap_to_pi(x);
     float32x4_t result = vdupq_n_f32(0);
+    result = x;
     float32x4_t x2 = vmulq_f32(x, x);
     float32x4_t x3 = vmulq_f32(x2, x);
     float32x4_t x5 = vmulq_f32(x3, x2);
@@ -78,6 +79,7 @@ static inline float32x4_t vcosq_f32(float32x4_t x)
     float32x4_t x6 = vmulq_f32(x4, x2);
 
     float32x4_t result = vdupq_n_f32(1.0f);
+    result = x;
     result = vfmsq_f32(result, x2, vdupq_n_f32(1.0f / 2.0f));
     result = vfmaq_f32(result, x4, vdupq_n_f32(1.0f / 24.0f));
     result = vfmsq_f32(result, x6, vdupq_n_f32(1.0f / 720.0f));
