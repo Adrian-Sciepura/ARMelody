@@ -4,6 +4,7 @@
 #include <math.h>
 #include <arm_neon.h>
 
+
 typedef struct complex_neon_t
 {
     float32x4_t re;
@@ -50,41 +51,82 @@ static inline complex_neon_t complex_division_neon(complex_neon_t c1, complex_ne
 static inline float32x4_t wrap_to_pi(float32x4_t x)
 {
     const float32x4_t two_pi = vdupq_n_f32(2.0f * M_PI);
-    float32x4_t k = vdivq_f32(x, two_pi);
-    k = vrndnq_f32(k); // round to nearest
+    const float32x4_t inv_two_pi = vdupq_n_f32(1.0f / (2.0f * M_PI));
+    float32x4_t k = vmulq_f32(x, inv_two_pi);
+    k = vrndnq_f32(k);
     return vsubq_f32(x, vmulq_f32(k, two_pi));
 }
 
 
-// if it takies too long, we can use lower-order polynomials like x5 max
 static inline float32x4_t vsinq_f32(float32x4_t x)
 {
     x = wrap_to_pi(x);
-    float32x4_t result = vdupq_n_f32(0);
-    result = x;
-    float32x4_t x2 = vmulq_f32(x, x);
-    float32x4_t x3 = vmulq_f32(x2, x);
-    float32x4_t x5 = vmulq_f32(x3, x2);
-    float32x4_t x7 = vmulq_f32(x5, x2);
-    result = vfmsq_f32(result, x3, vdupq_n_f32(1.0f / 6.0f));
-    result = vfmaq_f32(result, x5, vdupq_n_f32(1.0f / 120.0f));
-    result = vfmsq_f32(result, x7, vdupq_n_f32(1.0f / 5040.0f));
+
+    // Use symmetries: sin(x) = -sin(-x)
+    uint32x4_t sign_mask = vcltq_f32(x, vdupq_n_f32(0.0f)); // x < 0
+    float32x4_t x_abs = vabsq_f32(x); // work with positive x
+
+    const float32x4_t pi = vdupq_n_f32(M_PI);
+    const float32x4_t half_pi = vdupq_n_f32(M_PI * 0.5f);
+    uint32x4_t greater_half_pi = vcgtq_f32(x_abs, half_pi); // x > pi/2
+    x_abs = vbslq_f32(greater_half_pi, vsubq_f32(pi, x_abs), x_abs);
+
+    // Polynomial approximation: sin(x) ≈ x * (1 + x^2 * (p1 + x^2 * (p2 + x^2 * p3)))
+    float32x4_t x2 = vmulq_f32(x_abs, x_abs);
+
+    const float32x4_t p3 = vdupq_n_f32(-0.0001950727f);
+    const float32x4_t p2 = vdupq_n_f32( 0.0083320758f);
+    const float32x4_t p1 = vdupq_n_f32(-0.1666665247f);
+
+    float32x4_t poly = vfmaq_f32(p2, p3, x2);    // p2 + p3 * x^2
+    poly = vfmaq_f32(p1, poly, x2);               // p1 + (p2 + p3 * x^2) * x^2
+    poly = vmulq_f32(poly, x2);                   // (p1 + p2*x^2 + p3*x^4) * x^2
+
+    float32x4_t result = vfmaq_f32(x_abs, poly, x_abs);   // x + x * poly
+
+    result = vbslq_f32(sign_mask, vnegq_f32(result), result); // apply sign
+
     return result;
 }
+
 static inline float32x4_t vcosq_f32(float32x4_t x)
 {
     x = wrap_to_pi(x);
-    float32x4_t x2 = vmulq_f32(x, x);
-    float32x4_t x4 = vmulq_f32(x2, x2);
-    float32x4_t x6 = vmulq_f32(x4, x2);
 
-    float32x4_t result = vdupq_n_f32(1.0f);
-    result = x;
-    result = vfmsq_f32(result, x2, vdupq_n_f32(1.0f / 2.0f));
-    result = vfmaq_f32(result, x4, vdupq_n_f32(1.0f / 24.0f));
-    result = vfmsq_f32(result, x6, vdupq_n_f32(1.0f / 720.0f));
+    float32x4_t x_abs = vabsq_f32(x); // cos(-x) = cos(x), so always positive x
+
+    const float32x4_t pi = vdupq_n_f32(M_PI);
+    const float32x4_t half_pi = vdupq_n_f32(M_PI * 0.5f);
+    
+    // If x > pi/2, map: cos(x) = -cos(pi - x)
+    uint32x4_t greater_half_pi = vcgtq_f32(x_abs, half_pi);
+    float32x4_t x_mapped = vbslq_f32(greater_half_pi, vsubq_f32(pi, x_abs), x_abs);
+
+    float32x4_t x2 = vmulq_f32(x_mapped, x_mapped);
+
+    // Minimax coefficients for cos(x) ~ 1 + x^2*(p1 + x^2*(p2 + x^2*p3))
+    const float32x4_t p3 = vdupq_n_f32( 0.0002605556f);
+    const float32x4_t p2 = vdupq_n_f32(-0.0013888889f);
+    const float32x4_t p1 = vdupq_n_f32( 0.0416666664f);
+    const float32x4_t p0 = vdupq_n_f32(-0.5f);            // -1/2
+
+    float32x4_t poly = vfmaq_f32(p2, p3, x2);     // p2 + p3 * x^2
+    poly = vfmaq_f32(p1, poly, x2);               // p1 + (p2 + p3 * x^2) * x^2
+    poly = vfmaq_f32(p0, poly, x2);               // p0 + (p1 + p2*x^2 + p3*x^4) * x^2
+    poly = vmulq_f32(poly, x2);                   // * x^2
+    
+
+    float32x4_t result = vaddq_f32(vdupq_n_f32(1.0f), poly); // 1 + poly
+
+    result = vbslq_f32(greater_half_pi, vnegq_f32(result), result); // apply sign
+    
+    // OPTIONAL MAYBE SLOW MORE ACCURATE Special case: very close to pi/2, force cos(x) ≈ 0
+    uint32x4_t near_half_pi = vcltq_f32(vabsq_f32(vsubq_f32(x_abs, half_pi)), vdupq_n_f32(0.01f));
+    result = vbslq_f32(near_half_pi, vdupq_n_f32(0.0f), result);
+
     return result;
 }
+
 
 static inline float32x4_t vexpq_f32(float32x4_t x)
 {
