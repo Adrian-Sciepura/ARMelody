@@ -127,6 +127,54 @@ static inline float32x4_t vcosq_f32(float32x4_t x)
     return result;
 }
 
+static inline void vsincosq_f32(float32x4_t x, float32x4_t* sin_out, float32x4_t* cos_out)
+{
+    x = wrap_to_pi(x);
+
+    // sin(-x) = -sin(x), cos(-x) = cos(x)
+    uint32x4_t sign_mask = vcltq_f32(x, vdupq_n_f32(0.0f));
+    float32x4_t x_abs = vabsq_f32(x);
+
+    const float32x4_t pi = vdupq_n_f32(M_PI);
+    const float32x4_t half_pi = vdupq_n_f32(M_PI * 0.5f);
+
+    uint32x4_t greater_half_pi = vcgtq_f32(x_abs, half_pi);
+    float32x4_t x_mapped = vbslq_f32(greater_half_pi, vsubq_f32(pi, x_abs), x_abs);
+
+    float32x4_t x2 = vmulq_f32(x_mapped, x_mapped);
+
+    // --- Sine polynomial: x + x^3*p1 + x^5*p2 + x^7*p3 ---
+    const float32x4_t sin_p3 = vdupq_n_f32(-0.0001950727f);
+    const float32x4_t sin_p2 = vdupq_n_f32( 0.0083320758f);
+    const float32x4_t sin_p1 = vdupq_n_f32(-0.1666665247f);
+
+    float32x4_t sin_poly = vfmaq_f32(sin_p2, sin_p3, x2);    // sin_p2 + sin_p3*x^2
+    sin_poly = vfmaq_f32(sin_p1, sin_poly, x2);              // sin_p1 + ...
+    sin_poly = vmulq_f32(sin_poly, x2);                     // * x^2
+
+    float32x4_t sin_result = vfmaq_f32(x_mapped, sin_poly, x_mapped); // x + x*poly
+    sin_result = vbslq_f32(sign_mask, vnegq_f32(sin_result), sin_result);
+    
+    // --- Cosine polynomial: 1 + x^2*(p0 + x^2*(p1 + x^2*(p2 + x^2*p3))) ---
+    const float32x4_t cos_p3 = vdupq_n_f32( 0.0000248016f);
+    const float32x4_t cos_p2 = vdupq_n_f32(-0.0013888889f);
+    const float32x4_t cos_p1 = vdupq_n_f32( 0.0416666664f);
+    const float32x4_t cos_p0 = vdupq_n_f32(-0.5f);
+
+    float32x4_t cos_poly = vfmaq_f32(cos_p2, cos_p3, x2);    // cos_p2 + cos_p3*x^2
+    cos_poly = vfmaq_f32(cos_p1, cos_poly, x2);              // cos_p1 + ...
+    cos_poly = vfmaq_f32(cos_p0, cos_poly, x2);              // cos_p0 + ...
+    cos_poly = vmulq_f32(cos_poly, x2);                     // * x^2
+
+    float32x4_t cos_result = vaddq_f32(vdupq_n_f32(1.0f), cos_poly); // 1 + poly
+    cos_result = vbslq_f32(greater_half_pi, vnegq_f32(cos_result), cos_result);
+
+    // Output
+    *sin_out = sin_result;
+    *cos_out = cos_result;
+}
+
+
 
 static inline float32x4_t vexpq_f32(float32x4_t x)
 {
@@ -163,8 +211,8 @@ static inline complex_neon_t complex_mul_scalar_neon(complex_neon_t c1, float32x
 static inline complex_neon_t complex_exp_neon(complex_neon_t c)
 {   
     float32x4_t ex = vexpq_f32(c.re);
-    float32x4_t cos_val = vcosq_f32(c.im);
-    float32x4_t sin_val = vsinq_f32(c.im);
+    float32x4_t cos_val, sin_val;
+    vsincosq_f32(c.im, &sin_val, &cos_val);
     return (complex_neon_t) 
     {
         .re = vmulq_f32(ex, cos_val),
