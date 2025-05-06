@@ -84,16 +84,52 @@ int main(int argc, char** argv)
     for(int i = 0; i < number_of_samples; i++)
         data_as_complex[i].im = 0;
 
+    complex_t temp_data[12] = {
+        { .re = 1, .im = 0 },
+        { .re = 2, .im = 0 },
+        { .re = 3, .im = 0 },
+        { .re = 4, .im = 0 },
+        { .re = 5, .im = 0 },
+        { .re = 6, .im = 0 },
+        { .re = 7, .im = 0 },
+        { .re = 8, .im = 0 },
+        { .re = 9, .im = 0 },
+        { .re = 10, .im = 0 },
+        { .re = 11, .im = 0 },
+        { .re = 12, .im = 0 }
+    };
+    complex_t temp_data2[12] = {
+        { .re = 1, .im = 0 },
+        { .re = 2, .im = 0 },
+        { .re = 3, .im = 0 },
+        { .re = 4, .im = 0 },
+        { .re = 5, .im = 0 },
+        { .re = 6, .im = 0 },
+        { .re = 7, .im = 0 },
+        { .re = 8, .im = 0 },
+        { .re = 9, .im = 0 },
+        { .re = 10, .im = 0 },
+        { .re = 11, .im = 0 },
+        { .re = 12, .im = 0 }
+    };
+    number_of_samples = 12;
     //correlation(data_as_complex, data_as_complex, number_of_samples);
-    
-    float32x4_t* data_as_complex_neon = (float32x4_t*)malloc(number_of_samples / 4 * sizeof(float32x4_t));
-    for(int i = 0; i < number_of_samples / 4; i++)
-    {
-        data_as_complex_neon[i] = vdupq_n_f32(data_as_complex[i].re);
-    }
-    correlation_neon((complex_neon_t*)data_as_complex_neon, (complex_neon_t*)data_as_complex_neon, number_of_samples / 4);
-    free(data_as_complex_neon);
-
+    // complex_neon_t* data_as_complex_neon = (complex_neon_t*)malloc(number_of_samples / 4 * sizeof(complex_neon_t));
+    // for(int i = 0; i < number_of_samples; i++)
+    // {
+    //     data_as_complex_neon[i / 4].re[i % 4] = temp_data[i].re;
+    //     data_as_complex_neon[i / 4].im[i % 4] = temp_data[i].im;
+    // }
+    // correlation_neon(data_as_complex_neon, data_as_complex_neon, number_of_samples / 4);
+    correlation_neon(temp_data, temp_data, number_of_samples);
+    correlation(temp_data2, temp_data2, number_of_samples);
+    // float32x4_t* data_as_complex_neon = (float32x4_t*)malloc(number_of_samples / 4 * sizeof(float32x4_t));
+    // for(int i = 0; i < number_of_samples; i++)
+    // {
+    //     data_as_complex_neon[i / 4][i % 4] = vdupq_n_f32(data_as_complex[i].re);
+    // }
+    // correlation_neon((complex_neon_t*)data_as_complex_neon, (complex_neon_t*)data_as_complex_neon, number_of_samples / 4);
+    //free(data_as_complex_neon);
     free(data_as_complex);
     wav_close(&wav_file);
     return 0;
