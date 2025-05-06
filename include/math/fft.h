@@ -13,6 +13,8 @@ void cooley_tukey_ifft(complex_t* data, int n);
 
 void fft_iterative(complex_t* data, int n, bool invert);
 
+void fft_iterative_neon_fixed(complex_t* data, int n, bool invert);
+
 void fft_iterative_neon(complex_t* data, int n, bool invert);
 
 #endif
