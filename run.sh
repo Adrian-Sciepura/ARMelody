@@ -1,2 +1,2 @@
 #!/bin/bash
-qemu-aarch64 ./build/app.elf $@
+qemu-aarch64 -cpu max ./build/app.elf $@

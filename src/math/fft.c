@@ -1,7 +1,9 @@
 #include <math/fft.h>
 #include <math/consts.h>
 #include <stdlib.h>
+#include <time.h>
 #include <stdio.h>
+#include <stdint.h>
 
 void cooley_tukey_fft(complex_t* data, int n)
 {
@@ -56,23 +58,38 @@ void fft_iterative(complex_t* data, int n, bool invert)
 
     // printf("\n");
 
-    for(int len = 2; len <= n; len <<= 1)
+    clock_t start = clock();
+
+    for(int len = 4; len <= n; len <<= 1)
     {
+        //printf("===========================> len: %d\n", len);
         double angle = 2 * PI / len * (invert ? -1 : 1);
+        //printf("==========> angle: %f\n", angle);
         complex_t wlen = { .re = cos(angle), .im = sin(angle) };
+        //printf("==========> wlen: %f + %fi\n", wlen.re, wlen.im);
         for(int i = 0; i < n; i += len)
         {
             complex_t w = { .re = 1, .im = 0 };
+            //printf("==========> w: %f + %fi\n", w.re, w.im);
             for(int j = 0; j < len / 2; j++)
             {
                 complex_t u = data[i + j];
                 complex_t v = complex_mul(w, data[i + j + len / 2]);
+                
+                //printf("\t\tu: %f + %fi\n", u.re, u.im);
+                //printf("\t\tvw: %f + %fi\n", v.re, v.im);
+
                 data[i + j] = complex_add(u, v);
                 data[i + j + len / 2] = complex_sub(u, v);
                 w = complex_mul(w, wlen);
+                //printf("\t\tw: %f + %fi\n", w.re, w.im);
             }
+
+            //printf("====================\n");
         }
     }
+
+    printf("Time: %fs\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
     if(invert)
     {
@@ -94,6 +111,9 @@ void fft_iterative(complex_t* data, int n, bool invert)
 // res = [num1 * num2, num3 * num4]
 static inline float32x4_t multiply_two_complex(float32x4_t abef, float32x4_t ccgg, float32x4_t ddhh)
 {
+    static uint32x4_t mask_elements_0_and_2 = { 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000 };
+    static uint32x4_t mask_elements_1_and_3 = { 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF };
+ 
     float32x4_t temp1, temp2, temp3;
 
     // ----- Stage 1 -----
@@ -120,15 +140,14 @@ static inline float32x4_t multiply_two_complex(float32x4_t abef, float32x4_t ccg
 
     // ----- Stage 3 -----
 
-    // result = [ac - bd, bc + ad, eg - fh, fg + eh]
-    float32x4_t result = { 
-        vgetq_lane_f32(temp1, 0),
-        vgetq_lane_f32(temp2, 1),
-        vgetq_lane_f32(temp1, 2),
-        vgetq_lane_f32(temp2, 3)
-    };
+    // temp3 = [0, 0, 0, 0]
+    temp3 = vdupq_n_f32(0);
 
-    return result;
+    // result = [ac - bd, bc + ad, eg - fh, fg + eh]
+    return vaddq_f32(
+        vbslq_f32(mask_elements_0_and_2, temp1, temp3),
+        vbslq_f32(mask_elements_1_and_3, temp2, temp3)
+    );
 }
 
 
@@ -149,45 +168,59 @@ void fft_iterative_neon_fixed(complex_t* data, int n, bool invert)
         }
     }
 
-    float buffer[4] __attribute__((aligned(16)));
+    uint64_t* data_float_ptr = (uint64_t*)data;
+    clock_t start = clock();
+    static uint8x16_t idx =  {0, 1, 2, 3, 0, 1, 2, 3, 8, 9, 10, 11, 8, 9, 10, 11};
+    static uint8x16_t idx2 = {4, 5, 6, 7, 4, 5, 6, 7, 12, 13, 14, 15, 12, 13, 14, 15};
     
-    uint64_t* buffer_qword_ptr = (uint64_t*)&buffer;
-    uint64_t* data_qword_ptr = (uint64_t*)data;
 
-    for(int len = 2; len <= n; len <<= 1)
+    for(int len = 4; len <= n; len <<= 1)
     {
-        float angle = 2 * PI / len * (invert ? -1 : 1);
-        float angle_sin = sinf(angle);
-        float angle_cos = cosf(angle);
+        double angle = 2 * PI / len * (invert ? -1 : 1);
+        float angle_sin = sin(angle);
+        float angle_cos = cos(angle);
 
         float32x4_t wlen = { angle_cos, angle_sin, angle_cos, angle_sin };
+        float32x4_t wlen_re = { angle_cos, angle_cos, angle_cos, angle_cos };
+        float32x4_t wlen_im = { angle_sin, angle_sin, angle_sin, angle_sin };
+
+        //printf("===========================> len: %d\n", len);
+        //printf("==========> angle: %f\n", angle);
+        //printf("==========> wlen: %f + %fi, %f + %fi\n", vgetq_lane_f32(wlen, 0), vgetq_lane_f32(wlen, 1), vgetq_lane_f32(wlen, 2), vgetq_lane_f32(wlen, 3));
 
         for(int i = 0; i < n; i += len)
         {    
             float32x4_t w_re = { 1, 1, angle_cos, angle_cos };
             float32x4_t w_im = { 0, 0, angle_sin, angle_sin };
 
+            //printf("==========> w: %f + %fi, %f + %fi\n", w_re[0], w_im[0], w_re[2], w_im[2]);
+
             for(int j = 0; j < len / 2; j += 2)
             {
-                buffer_qword_ptr[0] = data_qword_ptr[i + j];
-                buffer_qword_ptr[1] = data_qword_ptr[i + j + 1];    
-                float32x4_t u = vld1q_f32(buffer);
 
-                buffer_qword_ptr[0] = data_qword_ptr[i + j + (len / 2)];
-                buffer_qword_ptr[1] = data_qword_ptr[i + j + (len / 2) + 1];    
-                float32x4_t v = vld1q_f32(buffer);
+                float32x4_t u = vld1q_f32(&data_float_ptr[i + j]);
+                float32x4_t v = vld1q_f32(&data_float_ptr[i + j + (len / 2)]);
 
                 v = multiply_two_complex(v, w_re, w_im);
-                
+                //printf("\t\tu: %f + %fi, %f + %fi\n", vgetq_lane_f32(u, 0), vgetq_lane_f32(u, 1), vgetq_lane_f32(u, 2), vgetq_lane_f32(u, 3));
+                //printf("\t\tvw: %f + %fi, %f + %fi\n", vgetq_lane_f32(v, 0), vgetq_lane_f32(v, 1), vgetq_lane_f32(v, 2), vgetq_lane_f32(v, 3));
+
                 vst1q_f32((float*)&data[i + j], vaddq_f32(u, v));
                 vst1q_f32((float*)&data[i + j + (len / 2)], vsubq_f32(u, v));
 
-                vst1q_f32(buffer, multiply_two_complex(wlen, w_re, w_im));
-                w_re = (float32x4_t) { buffer[0], buffer[0], buffer[2], buffer[2] };
-                w_im = (float32x4_t) { buffer[1], buffer[1], buffer[3], buffer[3] };
+                uint8x16_t temp = vreinterpretq_u8_f32(multiply_two_complex(multiply_two_complex(wlen, w_re, w_im), wlen_re, wlen_im));
+                //vst1q_f32(buffer, multiply_two_complex(multiply_two_complex(wlen, w_re, w_im), wlen_re, wlen_im));
+                
+                w_re = vreinterpretq_f32_u8(vqtbl1q_u8(temp, idx));
+                w_im = vreinterpretq_f32_u8(vqtbl1q_u8(temp, idx2));
+
+                //printf("\t\tw: %f + %fi, %f + %fi\n", w_re[0], w_im[0], w_re[2], w_im[2]);
             }
+
+            //printf("====================\n");
         }
     }
+    printf("Time: %fs\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
 
