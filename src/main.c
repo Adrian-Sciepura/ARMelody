@@ -113,6 +113,9 @@ int main(int argc, char** argv)
         { .re = 12, .im = 0 }
     };
     //int number_of_samples = 12;
+    // number_of_samples = 12;
+    // correlation(temp_data, temp_data, number_of_samples);
+    // correlation_neon(temp_data, temp_data, number_of_samples);
     correlation(data_as_complex, data_as_complex, number_of_samples);
     correlation_neon(data_as_complex, data_as_complex, number_of_samples);
     // complex_neon_t* data_as_complex_neon = (complex_neon_t*)malloc(number_of_samples / 4 * sizeof(complex_neon_t));
