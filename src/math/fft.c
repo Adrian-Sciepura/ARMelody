@@ -198,8 +198,8 @@ void fft_iterative_neon_fixed(complex_t* data, int n, bool invert)
             for(int j = 0; j < len / 2; j += 2)
             {
 
-                float32x4_t u = vld1q_f32(&data_float_ptr[i + j]);
-                float32x4_t v = vld1q_f32(&data_float_ptr[i + j + (len / 2)]);
+                float32x4_t u = vld1q_f32((float*)&data_float_ptr[i + j]);
+                float32x4_t v = vld1q_f32((float*)&data_float_ptr[i + j + (len / 2)]);
 
                 v = multiply_two_complex(v, w_re, w_im);
                 //printf("\t\tu: %f + %fi, %f + %fi\n", vgetq_lane_f32(u, 0), vgetq_lane_f32(u, 1), vgetq_lane_f32(u, 2), vgetq_lane_f32(u, 3));
@@ -221,6 +221,15 @@ void fft_iterative_neon_fixed(complex_t* data, int n, bool invert)
         }
     }
     printf("Time: %fs\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+
+    if(invert)
+    {
+        for(int i = 0; i < n; i++)
+        {
+            data[i].re /= n;
+            data[i].im /= n;
+        }
+    }
 }
 
 

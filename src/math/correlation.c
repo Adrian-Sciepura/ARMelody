@@ -10,6 +10,8 @@ void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n
     while(n > padded_size)
         padded_size *= 2;
 
+    printf("Padded size: %d\n", padded_size);
+
     complex_t* padded_orginal = (complex_t*)calloc(padded_size, sizeof(complex_t));
     complex_t* padded_potential = (complex_t*)calloc(padded_size, sizeof(complex_t));
 
@@ -20,21 +22,25 @@ void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n
     }
     // result = IFFT(FFT(padded_orginal) x conjugate(FFT(padded_potential)))
     fft_iterative(padded_orginal, padded_size, false);
-    //for(int i = 0; i < padded_size; i++)
-    //{
-    //    printf("padded_orginal[%d] = %f + %fi\n", i, padded_orginal[i].re, padded_orginal[i].im);
-    //}
+    fft_iterative(padded_potential, padded_size, false);
     
-    // fft_iterative(padded_potential, padded_size, false);
     
-    // for(int i = 0; i < padded_size; i++)
-    // {
-    //     padded_potential[i].im = -padded_potential[i].im;
-    //     complex_mul_inplace(&padded_potential[i], padded_orginal[i]);
-    // }
-    // fft_iterative(padded_potential, padded_size, true);
-
-    // correlation_interpretation(padded_potential, padded_size);
+    
+    for(int i = 0; i < padded_size; i++)
+    {
+        padded_potential[i].im = -padded_potential[i].im;
+        complex_mul_inplace(&padded_potential[i], padded_orginal[i]);
+    }
+    for(int i = 0; i < padded_size; i++)
+    {
+       printf("padded_orginal[%d] = %f + %fi\n", i, padded_potential[i].re, padded_potential[i].im);
+    }
+    fft_iterative(padded_potential, padded_size, true);
+    for(int i = 0; i < padded_size; i++)
+    {
+       printf("padded_orginal[%d] = %f + %fi\n", i, padded_potential[i].re, padded_potential[i].im);
+    }
+    correlation_interpretation(padded_potential, padded_size);
 
     free(padded_orginal);
     free(padded_potential);
@@ -61,6 +67,8 @@ void correlation_neon(complex_t* orginal_data, complex_t* potential_match_data, 
     int padded_size = 2;
     while(n > padded_size)
         padded_size *= 2;
+
+    printf("Padded size: %d\n", padded_size);
         
     complex_t* padded_orginal = (complex_t*)calloc(padded_size, sizeof(complex_t));
     complex_t* padded_potential = (complex_t*)calloc(padded_size, sizeof(complex_t));
@@ -72,13 +80,11 @@ void correlation_neon(complex_t* orginal_data, complex_t* potential_match_data, 
     }
     // result = IFFT(FFT(padded_orginal) x conjugate(FFT(padded_potential)))
     fft_iterative_neon_fixed(padded_orginal, padded_size, false);
-    //fft_iterative_neon(padded_potential, padded_size, false);
-    //for(int i = 0; i < padded_size; i++)
-    //{
-    //    printf("padded_orginal[%d] = %f + %fi\n", i, padded_orginal[i].re, padded_orginal[i].im);
-    //}
+    fft_iterative_neon_fixed(padded_potential, padded_size, false);
     
-    printf("\n\n");
+
+    
+    // printf("\n\n");
     // for(int i = 0; i < padded_size; i++)
     // {
     //     for(int j = 0; j < 4; j++)
@@ -88,19 +94,24 @@ void correlation_neon(complex_t* orginal_data, complex_t* potential_match_data, 
     // }
     // printf("\n\n");
     
-    // fft_iterative_neon(padded_potential, padded_size, false);
-    
-    // for(int i = 0; i < padded_size; i++)
-    // {
-    //     padded_potential[i].im = vnegq_f32(padded_potential[i].im);
-    //     padded_potential[i] = complex_mul_scalar_neon(padded_potential[i], padded_orginal[i].re);
-    // }
-    // fft_iterative_neon(padded_potential, padded_size, true);
-
-    // correlation_interpretation_neon(padded_potential, padded_size);
+    for(int i = 0; i < padded_size; i++)
+    {
+        padded_potential[i].im = -padded_potential[i].im;
+        complex_mul_inplace(&padded_potential[i], padded_orginal[i]);
+    }
+    for(int i = 0; i < padded_size; i++)
+    {
+       printf("padded_orginal[%d] = %f + %fi\n", i, padded_potential[i].re, padded_potential[i].im);
+    }
+    fft_iterative_neon_fixed(padded_potential, padded_size, true);
+    for(int i = 0; i < padded_size; i++)
+    {
+       printf("padded_orginal[%d] = %f + %fi\n", i, padded_potential[i].re, padded_potential[i].im);
+    }
+    correlation_interpretation(padded_potential, padded_size);
 
     free(padded_orginal);
-    //free(padded_potential);
+    free(padded_potential);
 }
 
 void correlation_interpretation_neon(complex_neon_t* data, int n)
