@@ -20,10 +20,10 @@ void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n
     }
     // result = IFFT(FFT(padded_orginal) x conjugate(FFT(padded_potential)))
     fft_iterative(padded_orginal, padded_size, false);
-    for(int i = 0; i < padded_size; i++)
-    {
-        printf("padded_orginal[%d] = %f + %fi\n", i, padded_orginal[i].re, padded_orginal[i].im);
-    }
+    //for(int i = 0; i < padded_size; i++)
+    //{
+    //    printf("padded_orginal[%d] = %f + %fi\n", i, padded_orginal[i].re, padded_orginal[i].im);
+    //}
     
     // fft_iterative(padded_potential, padded_size, false);
     
@@ -73,10 +73,10 @@ void correlation_neon(complex_t* orginal_data, complex_t* potential_match_data, 
     // result = IFFT(FFT(padded_orginal) x conjugate(FFT(padded_potential)))
     fft_iterative_neon_fixed(padded_orginal, padded_size, false);
     //fft_iterative_neon(padded_potential, padded_size, false);
-    for(int i = 0; i < padded_size; i++)
-    {
-        printf("padded_orginal[%d] = %f + %fi\n", i, padded_orginal[i].re, padded_orginal[i].im);
-    }
+    //for(int i = 0; i < padded_size; i++)
+    //{
+    //    printf("padded_orginal[%d] = %f + %fi\n", i, padded_orginal[i].re, padded_orginal[i].im);
+    //}
     
     printf("\n\n");
     // for(int i = 0; i < padded_size; i++)
