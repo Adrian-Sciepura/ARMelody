@@ -36,6 +36,7 @@ void cooley_tukey_fft(complex_t* data, int n)
     free(split);
 }
 
+/*
 void fft_iterative(complex_t* data, int n, bool invert)
 {
     for(int i = 1, j = 0; i < n; i++)
@@ -52,11 +53,6 @@ void fft_iterative(complex_t* data, int n, bool invert)
             data[j] = tmp;
         }
     }
-
-    // for(int i = 0; i < n; i++)
-    //     printf("data[%d] = %f + %fi\n", i, data[i].re, data[i].im);
-
-    // printf("\n");
 
     clock_t start = clock();
 
@@ -100,7 +96,7 @@ void fft_iterative(complex_t* data, int n, bool invert)
         }
     }
 }
-
+*/
 // Performs multiplication of two complex numbers
 // ----- Data -----
 // num1 = a + bi

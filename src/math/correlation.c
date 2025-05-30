@@ -3,6 +3,7 @@
 #include <math/consts.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n)
 {
@@ -21,9 +22,11 @@ void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n
         padded_potential[i] = potential_match_data[i];
     }
     // result = IFFT(FFT(padded_orginal) x conjugate(FFT(padded_potential)))
+    clock_t start = clock();
     fft_iterative(padded_orginal, padded_size, false);
+    clock_t fft_1 = clock();
     fft_iterative(padded_potential, padded_size, false);
-    
+    clock_t fft_2 = clock();
     // for(int i = 0; i < padded_size; i++)
     // {
     //    printf("padded_orginal[%d] = %f + %fi\n", i, padded_potential[i].re, padded_potential[i].im);
@@ -38,11 +41,17 @@ void correlation(complex_t* orginal_data, complex_t* potential_match_data, int n
     // {
     //    printf("padded_orginal[%d] = %f + %fi\n", i, padded_potential[i].re, padded_potential[i].im);
     // }
+    clock_t fft_3 = clock();
     fft_iterative(padded_potential, padded_size, true);
+    clock_t fft_4 = clock();
     // for(int i = 0; i < padded_size; i++)
     // {
     //    printf("padded_orginal[%d] = %f + %fi\n", i, padded_potential[i].re, padded_potential[i].im);
     // }
+
+    printf("Time: %fs\n", (double)(fft_1 - start) / CLOCKS_PER_SEC);
+    printf("Time: %fs\n", (double)(fft_2 - fft_1) / CLOCKS_PER_SEC);
+    printf("Time: %fs\n", (double)(fft_4 - fft_3) / CLOCKS_PER_SEC);
     correlation_interpretation(padded_potential, padded_size);
 
     free(padded_orginal);
