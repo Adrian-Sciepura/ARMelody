@@ -4,7 +4,6 @@
 #include <math.h>
 #include <arm_neon.h>
 
-
 typedef struct complex_neon_t
 {
     float32x4_t re;
@@ -56,7 +55,6 @@ static inline float32x4_t wrap_to_pi(float32x4_t x)
     k = vrndnq_f32(k);
     return vsubq_f32(x, vmulq_f32(k, two_pi));
 }
-
 
 static inline float32x4_t vsinq_f32(float32x4_t x)
 {
@@ -174,8 +172,6 @@ static inline void vsincosq_f32(float32x4_t x, float32x4_t* sin_out, float32x4_t
     *cos_out = cos_result;
 }
 
-
-
 static inline float32x4_t vexpq_f32(float32x4_t x)
 {
     // Optional: clip to prevent overflow,
@@ -207,7 +203,6 @@ static inline complex_neon_t complex_mul_scalar_neon(complex_neon_t c1, float32x
     };
 }
 
-
 static inline complex_neon_t complex_exp_neon(complex_neon_t c)
 {   
     float32x4_t ex = vexpq_f32(c.re);
@@ -219,8 +214,5 @@ static inline complex_neon_t complex_exp_neon(complex_neon_t c)
         .im = vmulq_f32(ex, sin_val)
     };
 }
-
-
-
 
 #endif

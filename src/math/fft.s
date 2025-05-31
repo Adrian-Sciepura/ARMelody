@@ -1,7 +1,7 @@
-.global fft_iterative
+.global fft_iterative_neon
 .extern __sincos
 
-fft_iterative:
+fft_iterative_neon:
     stp x29, x30, [sp, #-128]!
     mov x29, sp
     stp x21, x22, [sp, #32]
