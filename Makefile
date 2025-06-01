@@ -1,5 +1,5 @@
 FLAGS = -MMD -Iinclude
-CFLAGS = -g -O0 -Wall -static
+CFLAGS = -g -O0 -Wall -static -march=armv8.3-a+simd
 LDFLAGS = -lm
 
 GNU = aarch64-linux-gnu
