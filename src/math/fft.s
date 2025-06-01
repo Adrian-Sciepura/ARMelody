@@ -296,8 +296,13 @@ fft_middle_loop_body:
 //  ───────────────────
 //
     mov x0, x6                              // x0 = data
-    fmov s2, s9                             // s2 = w.im
-    fmov s1, s8                             // s1 = w.re
+
+    mov v1.s[0], v8.s[0]
+    mov v1.s[1], v9.s[0]
+
+    mov v2.s[0], v16.s[0]
+    mov v2.s[1], v7.s[0]
+
     mov w1, #0x0                            // j = 0
 fft_inner_loop_body:
 //
@@ -319,31 +324,25 @@ fft_inner_loop_body:
 //
 //  ───────────────────
 //
-    ldr s4, [x0]                            // s4 = data[i + j].re
-    ldr s3, [x0, #4]                        // s3 = data[i + j].im
-    ldr s6, [x0, x2]                        // s6 = data[i + j + len/2].re
-    ldr s0, [x0, x3]                        // s0 = data[i + j + len/2].im
-    fmul s5, s6, s1                         // s5 = data[i + j + len/2].re * w.re
-    fmul s17, s0, s2                        // s17 = data[i + j + len/2].im * w.im
-    fsub s5, s5, s17                        // s5 = data[i + j + len/2].re * w.re - data[i + j + len/2].im * w.im
-    fmul s0, s0, s1                         // s0 = data[i + j + len/2].im * w.re
-    fmul s6, s6, s2                         // s6 = data[i + j + len/2].re * w.im
-    fadd s0, s0, s6                         // s0 = data[i + j + len/2].im * w.re + data[i + j + len/2].re * w.im
-    fadd s6, s4, s5                         // s6 = data[i + j].re + data[i + j + len/2].re * w.re
-    str s6, [x0]                            // data[i + j].re = data[i + j].re + data[i + j + len/2].re * w.re
-    fadd s6, s3, s0                         // s6 = data[i + j].im + data[i + j + len/2].im * w.re
-    str s6, [x0, #4]                        // data[i + j].im = data[i + j].im + data[i + j + len/2].im * w.re
-    fsub s4, s4, s5                         // s4 = data[i + j].re - data[i + j + len/2].re * w.re - data[i + j + len/2].im * w.im
-    str s4, [x0, x2]                        // data[i + j + len/2].re = data[i + j].re - data[i + j + len/2].re * w.re - data[i + j + len/2].im * w.im
-    fsub s3, s3, s0                         // s3 = s3 = data[i + j].im - data[i + j + len/2].im * w.re + data[i + j + len/2].re * w.im
-    str s3, [x0, x3]                        // data[i + j + len/2].im = s3 = data[i + j].im - data[i + j + len/2].im * w.re + data[i + j + len/2].re * w.im
-    fmov s0, s1                             // s0 = w.re
-    fmul s1, s16, s1                        // s1 = wlen.re * w.re
-    fmul s3, s7, s2                         // s3 = wlen.im * w.im
-    fsub s1, s1, s3                         // s1 = cos * w.re - sin * w.im
-    fmul s0, s7, s0                         // s0 = wlen.im * w.re
-    fmul s2, s16, s2                        // s2 = wlen.re * w.im
-    fadd s2, s0, s2                         // s2 = sin * w.re + cos * w.im
+    add x3, x0, x2
+    ld1 {v3.2s}, [x0]                       // v3 = ?, ?, data[i + j].re, data[i + j].im 
+    ld1 {v4.2s}, [x3]                       // v4 = ?, ?, data[i + j + len/2].re, data[i + j + len/2].im
+
+    movi v5.2s, #0
+    fcmla v5.2s, v4.2s, v1.2s, #0
+    fcmla v5.2s, v4.2s, v1.2s, #90          // v5 = v
+
+    fadd v6.2s, v3.2s, v5.2s                // v6 = u + v
+    st1 {v6.2s}, [x0]                       // data[i + j] = u + v
+
+    fsub v6.2s, v3.2s, v5.2s                // v6 = u - v
+    st1 {v6.2s}, [x3]                       // data[i + j + len/2] = u - v
+
+    movi v5.2s, #0
+    fcmla v5.2s, v1.2s, v2.2s, #0
+    fcmla v5.2s, v1.2s, v2.2s, #90          // v5 = w * wlen
+    mov v1.16b, v5.16b
+
     add w1, w1, #0x1                        // j += 1
     add x0, x0, #0x8                        // data = data + 8
     cmp w1, w4                              // if j < len / 2
@@ -410,8 +409,8 @@ fft_outer_loop_body_2:
 //
 //  ───────────────────
 //
-    scvtf d0, w19                           // d0 = 2
-    fdiv d0, d11, d0                        // d0 = PI
+    scvtf d0, w19                           // d0 = len
+    fdiv d0, d11, d0                        // d0 = 2 * PI / len
     mov x1, x23                             // cos_out = SP + 112
     mov x0, x24                             // sin_out = SP + 120
     fmul d0, d0, d10                        // x = PI * invert val
@@ -550,3 +549,6 @@ skip_invert:
     ldp d8, d9, [sp, #80]
     ldp d10, d11, [sp, #96]
     b fft_iterative_neon_end
+
+
+multiply_two_complex:
